@@ -21,32 +21,17 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
   role       = aws_iam_role.example.name
 }
 
-# Get default VPC
+#get vpc data
 data "aws_vpc" "default" {
   default = true
 }
-
-data "aws_subnets" "all" {
+#get public subnets for cluster
+data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
 }
-
-data "aws_subnet" "each" {
-  count = length(data.aws_subnets.all.ids)
-  id    = data.aws_subnets.all.ids[count.index]
-}
-
-locals {
-  allowed_azs = ["us-east-1a", "us-east-1b", "us-east-1c"]
-
-  filtered_subnets = [
-    for s in data.aws_subnet.each : s.id
-    if contains(local.allowed_azs, s.availability_zone)
-  ]
-}
-
 #cluster provision
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
